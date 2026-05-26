@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import streamlit as st; print\\('OK'\\)\")",
+      "Bash(python -c ' *)"
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+=================================================================
+  TRAINING REPORT - SPK HIPERTENSION
+  Decision Tree + Probability Calibration
+=================================================================
+
+Training Date : 2026-05-25 23:08:13
+Dataset       : D:\SPK HYPERTENSION\hypertension_dataset.xlsx
+Total Samples : 1985
+Train Samples : 1588 (80%)
+Test Samples  : 397 (20%)
+
+Best Parameters:
+  criterion: gini
+  max_depth: 8
+  min_samples_leaf: 1
+  min_samples_split: 5
+
+Metrics (Calibrated Model):
+  Accuracy:  0.9673
+  Precision: 0.9707
+  Recall:    0.9660
+  F1-Score:  0.9684
+
+Confidence Distribution:
+  Min:  50.9%
+  Mean: 93.3%
+  Max:  98.1%
+  <90%: 56 samples
+
+Feature Importance:
+  BP_History: 0.2804
+  Age: 0.1370
+  Family_History: 0.1176
+  Stress_Score: 0.1003
+  BMI: 0.0962
+  Smoking_Status: 0.0906
+  Salt_Intake: 0.0898
+  Sleep_Duration: 0.0882
+  Exercise_Level: 0.0000
