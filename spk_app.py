@@ -317,7 +317,7 @@ with col_result:
         st.markdown("#### Alur Keputusan (Decision Path - User Input)")
 
         # Buat visualisasi decision path dengan style plot_tree
-        path_fig = plot_decision_path_only(path_info, reverse_maps)
+        path_fig = plot_decision_path_only(path_info, reverse_maps, confidence=confidence)
         st.pyplot(path_fig)
 
         

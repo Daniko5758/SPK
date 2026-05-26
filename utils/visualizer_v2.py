@@ -20,7 +20,7 @@ FEAT_ID = {
 }
 
 
-def plot_decision_path_only(path_info, reverse_maps=None):
+def plot_decision_path_only(path_info, reverse_maps=None, confidence=None):
     """
     Visualisasi Decision Path - Simpel & Besar
     - Layout vertikal (root di atas, leaf di bawah)
@@ -30,7 +30,7 @@ def plot_decision_path_only(path_info, reverse_maps=None):
     """
     steps = path_info['steps']
     pred_class = path_info['predicted_class']
-    conf = path_info['confidence']
+    conf = confidence if confidence is not None else path_info['confidence']
 
     decision_steps = [s for s in steps if not s.get('is_leaf')]
     n = len(decision_steps)

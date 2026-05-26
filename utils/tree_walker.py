@@ -93,8 +93,9 @@ def get_decision_path(model, X_input_array, raw_input=None):
     # Get leaf info
     last_node = node_indices[-1]
     class_probs = tree.value[last_node][0]
+    sample_sum = float(np.sum(class_probs))
     predicted_class = int(np.argmax(class_probs))
-    confidence = float(np.max(class_probs))
+    confidence = float(class_probs[predicted_class]) / sample_sum  # proporsi, bukan jumlah sample
 
     # Add leaf node as last step
     steps.append({
