@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(python -c \"import streamlit as st; print\\('OK'\\)\")",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(pip show *)",
+      "Bash(python *)"
     ]
   }
 }

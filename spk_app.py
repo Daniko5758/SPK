@@ -235,9 +235,6 @@ with col_form:
         family_options = list(label_maps['Family_History'].keys())
         family_history = st.selectbox("**Riwayat Keluarga Hipertensi**", family_options, index=0)
 
-        exercise_options = list(label_maps['Exercise_Level'].keys())
-        exercise_level = st.selectbox("**Tingkat Aktivitas Fisik**", exercise_options, index=0)
-
         smoking_options = list(label_maps['Smoking_Status'].keys())
         smoking_status = st.selectbox("**Status Merokok**", smoking_options, index=0)
 
@@ -267,7 +264,7 @@ with col_result:
         user_input = {
             'Age': age, 'Salt_Intake': salt_intake, 'Stress_Score': stress_score,
             'BP_History': bp_history, 'Sleep_Duration': sleep_duration, 'BMI': bmi,
-            'Family_History': family_history, 'Exercise_Level': exercise_level,
+            'Family_History': family_history, 'Exercise_Level': 'Moderate',
             'Smoking_Status': smoking_status
         }
 
@@ -320,11 +317,80 @@ with col_result:
         path_fig = plot_decision_path_only(path_info, reverse_maps, confidence=confidence)
         st.pyplot(path_fig)
 
-        
+        # ============================================================
+        # PERHITUNGAN PROBABILITAS (Step-by-step breakdown)
+        # ============================================================
 
-# ============================================================
-# BAGIAN BAWAH: VISUALISINFO MODEL
-# ============================================================
+        st.markdown("#### 📐 Perhitungan Probabilitas")
+
+        # Ambil sample count dari leaf node di base tree
+        leaf_step = next((s for s in path_info['steps'] if s.get('is_leaf')), None)
+        if leaf_step:
+            class_counts = leaf_step.get('class_probs', [0, 0])
+            if isinstance(class_counts, list) and len(class_counts) == 2:
+                count_no = int(class_counts[0])
+                count_yes = int(class_counts[1])
+                total = count_no + count_yes
+                prob_no = count_no / total if total > 0 else 0
+                prob_yes = count_yes / total if total > 0 else 0
+
+                # Tampilkan setiap langkah decision
+                decision_steps = [s for s in path_info['steps'] if not s.get('is_leaf')]
+
+                FEAT_ID = {
+                    'Age': 'Usia', 'Salt_Intake': 'Asupan Garam',
+                    'Stress_Score': 'Tingkat Stres', 'BP_History': 'Riwayat Tekanan Darah',
+                    'Sleep_Duration': 'Durasi Tidur', 'BMI': 'BMI',
+                    'Family_History': 'Riwayat Keluarga', 'Exercise_Level': 'Aktivitas Fisik',
+                    'Smoking_Status': 'Status Merokok',
+                }
+                REVERSE_BP = {1: 'Normal', 2: 'Prehypertension', 3: 'Hypertension'}
+                REVERSE_FH = {0: 'No', 1: 'Yes'}
+                REVERSE_EL = {1: 'Low', 2: 'Moderate', 3: 'High'}
+                REVERSE_SM = {0: 'Non-Smoker', 1: 'Smoker'}
+
+                def fmt_val(feat, val):
+                    if isinstance(val, str):
+                        return val
+                    if feat == 'BP_History' and val in REVERSE_BP:
+                        return f"{REVERSE_BP[int(val)]} (encoded = {int(val)})"
+                    if feat == 'Family_History' and val in REVERSE_FH:
+                        return f"{REVERSE_FH[int(val)]} (encoded = {int(val)})"
+                    if feat == 'Exercise_Level' and val in REVERSE_EL:
+                        return f"{REVERSE_EL[int(val)]} (encoded = {int(val)})"
+                    if feat == 'Smoking_Status' and val in REVERSE_SM:
+                        return f"{REVERSE_SM[int(val)]} (encoded = {int(val)})"
+                    if isinstance(val, float) and val == int(val):
+                        return str(int(val))
+                    if isinstance(val, (int, float)):
+                        return f"{val:.2f}".rstrip('0').rstrip('.')
+                    return str(val)
+
+                calc_md = ""
+                for step in decision_steps:
+                    feat = step.get('feature', '')
+                    direction = step.get('direction', '')
+                    label_ya = "YA (kiri)" if direction == 'left' else "YA (kiri) ✅"
+                    label_tidak = "TIDAK (kanan)" if direction == 'right' else "TIDAK (kanan) ❌"
+                    badge = label_ya if direction == 'left' else label_tidak
+
+                    calc_md += f"**Step {step['step']} — {FEAT_ID.get(feat, feat)}**  \n"
+                    calc_md += f"- Nilai Anda: `{fmt_val(feat, step.get('display_value', step.get('input_value', '')))}`  \n"
+                    calc_md += f"- Threshold: `{step['threshold']}`  \n"
+                    comp = step.get('comparison', '')
+                    calc_md += f"- Kondisi: `{comp}`  \n"
+                    calc_md += f"- Hasil: → **{badge}**  \n\n"
+
+                calc_md += "---  \n\n"
+                calc_md += f"**📊 Leaf Node — Sample di Training Data:**  \n\n"
+                calc_md += f"| Kelas | Jumlah Sample | Perhitungan | Probabilitas |  \n"
+                calc_md += f"|---|---|---|---|  \n"
+                calc_md += f"| Tidak Hipertensi | {count_no} | {count_no} / {total} | **{prob_no * 100:.1f}%** |  \n"
+                calc_md += f"| Hipertensi | {count_yes} | {count_yes} / {total} | **{prob_yes * 100:.1f}%** |  \n\n"
+                calc_md += f"**Total sample di leaf ini: {total}**  \n\n"
+                calc_md += f"> Prediksi akhir: **{'Tidak Hipertensi' if path_info['predicted_class'] == 0 else 'Hipertensi'}** dengan keyakinan **{confidence * 100:.1f}%**"
+
+                st.markdown(calc_md)
 
 st.markdown("---")
 st.markdown("### 🌳 Visualisasi Pohon Keputusan Lengkap")
