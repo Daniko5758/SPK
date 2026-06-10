@@ -5,15 +5,9 @@ Ini digunakan untuk menampilkan animated walk di visualisasi.
 """
 
 import numpy as np
-import joblib
 import os
 
 MODELS_DIR = os.path.join(os.path.dirname(__file__), '..', 'models')
-
-
-def load_model():
-    """Load trained model"""
-    return joblib.load(os.path.join(MODELS_DIR, 'model_hypertension.joblib'))
 
 
 def load_feature_names():

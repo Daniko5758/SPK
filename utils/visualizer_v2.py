@@ -11,11 +11,9 @@ FEAT_ID = {
     'Age': 'Usia',
     'Salt_Intake': 'Asupan Garam',
     'Stress_Score': 'Tingkat Stres',
-    'BP_History': 'Riwayat Tekanan Darah',
     'Sleep_Duration': 'Durasi Tidur',
     'BMI': 'BMI',
     'Family_History': 'Riwayat Keluarga',
-    'Exercise_Level': 'Aktivitas Fisik',
     'Smoking_Status': 'Status Merokok',
 }
 

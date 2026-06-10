@@ -26,27 +26,35 @@ from sklearn.metrics import (
 # KONFIGURASI
 # =========================
 
-DATASET_PATH = r"D:\SPK HYPERTENSION\hypertension_dataset.xlsx"
+DATASET_PATH = r"../SPK HYPERTENSION/hypertension_dataset.xlsx"
 MODELS_DIR = "models"
 TRAIN_SIZE = 0.8
 RANDOM_STATE = 42
 
 # Label mappings eksplisit (sesuai sheet Keterangan)
+# Catatan: BP_History dan Exercise_Level dihapus dari fitur model.
+# - BP_History dulunya importance 28% (tertinggi) — dihapus atas permintaan user.
+# - Exercise_Level dulunya importance 0% (diabaikan model) — sekalian dibersihkan.
 LABEL_MAPS = {
-    'BP_History':     {'Normal': 1, 'Prehypertension': 2, 'Hypertension': 3},
     'Family_History':  {'No': 0, 'Yes': 1},
-    'Exercise_Level':  {'Low': 1, 'Moderate': 2, 'High': 3},
     'Smoking_Status':  {'Non-Smoker': 0, 'Smoker': 1},
     'Has_Hypertension': {'No': 0, 'Yes': 1}
 }
 
 REVERSE_MAPS = {
-    'BP_History':     {1: 'Normal', 2: 'Prehypertension', 3: 'Hypertension'},
     'Family_History': {0: 'No', 1: 'Yes'},
-    'Exercise_Level':  {1: 'Low', 2: 'Moderate', 3: 'High'},
     'Smoking_Status':  {0: 'Non-Smoker', 1: 'Smoker'},
     'Has_Hypertension': {0: 'Tidak Hipertensi', 1: 'Hipertensi'}
 }
+
+# Urutan fitur yang dipakai model (harus sinkron dengan models/feature_names.json)
+EXPECTED_FEATURES = [
+    'Age', 'Salt_Intake', 'Stress_Score', 'Sleep_Duration',
+    'BMI', 'Family_History', 'Smoking_Status',
+]
+
+# Kolom yang di-drop sebelum training
+COLS_TO_DROP = ['Medication', 'BP_History', 'Exercise_Level']
 
 # =========================
 # 1. LOAD DATASET
@@ -76,10 +84,11 @@ for col, mapping in LABEL_MAPS.items():
         df_encoded[col] = df_encoded[col].map(mapping)
         print(f"     {col}: {mapping}")
 
-# Drop Medication
-if 'Medication' in df_encoded.columns:
-    df_encoded = df_encoded.drop(columns=['Medication'])
-    print("     [DROP] Kolom 'Medication' di-drop")
+# Drop kolom yang tidak dipakai model
+existing_drops = [c for c in COLS_TO_DROP if c in df_encoded.columns]
+if existing_drops:
+    df_encoded = df_encoded.drop(columns=existing_drops)
+    print(f"     [DROP] Kolom di-drop: {existing_drops}")
 
 # =========================
 # 3. SPLIT DATA
@@ -92,6 +101,13 @@ TARGET = 'Has_Hypertension'
 feature_cols = [col for col in df_encoded.columns if col != TARGET]
 X = df_encoded[feature_cols]
 y = df_encoded[TARGET]
+
+# Assertion: pastikan urutan fitur sesuai kontrak
+assert list(X.columns) == EXPECTED_FEATURES, (
+    f"Feature order mismatch!\n"
+    f"  Expected: {EXPECTED_FEATURES}\n"
+    f"  Got:      {list(X.columns)}"
+)
 
 print(f"     Features ({len(feature_cols)}): {feature_cols}")
 print(f"     Target: {TARGET}")
@@ -140,7 +156,7 @@ for p, v in grid_search.best_params_.items():
 best_base_model = grid_search.best_estimator_
 
 # =========================
-# 6. PROBABILITY CALIBRATION (OPSI B)
+# 6. PROBABILITY CALIBRATION (Isotonic Regression)
 # =========================
 
 print()

@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 
 # Import utils
-from utils.encode import get_valid_options, encode_to_model_input
+from utils.encode import get_valid_options, encode_to_model_input, validate_input
 from utils.tree_walker import get_decision_path
 from utils.visualizer_v2 import plot_decision_path_only
 
@@ -226,9 +226,6 @@ with col_form:
         salt_intake = st.slider("**Asupan Garam (Salt Intake)** - gram/hari", 0.0, 25.0, 8.0, 0.5)
         stress_score = st.slider("**Tingkat Stres (Stress Score)**", 0, 10, 5)
 
-        bp_options = list(label_maps['BP_History'].keys())
-        bp_history = st.selectbox("**Riwayat Tekanan Darah (BP History)**", bp_options, index=0)
-
         sleep_duration = st.slider("**Durasi Tidur (Sleep Duration)** - jam/hari", 0.0, 24.0, 7.0, 0.5)
         bmi = st.number_input("**BMI (Body Mass Index)**", 10.0, 80.0, 25.0, 0.1)
 
@@ -263,10 +260,16 @@ with col_result:
         # Build input
         user_input = {
             'Age': age, 'Salt_Intake': salt_intake, 'Stress_Score': stress_score,
-            'BP_History': bp_history, 'Sleep_Duration': sleep_duration, 'BMI': bmi,
-            'Family_History': family_history, 'Exercise_Level': 'Moderate',
-            'Smoking_Status': smoking_status
+            'Sleep_Duration': sleep_duration, 'BMI': bmi,
+            'Family_History': family_history, 'Smoking_Status': smoking_status
         }
+
+        # Validate input
+        try:
+            validate_input(user_input)
+        except ValueError as e:
+            st.error(f"Input tidak valid: {e}")
+            st.stop()
 
         # Encode
         X_input = encode_to_model_input(user_input, feature_names)
@@ -323,74 +326,58 @@ with col_result:
 
         st.markdown("#### 📐 Perhitungan Probabilitas")
 
-        # Ambil sample count dari leaf node di base tree
-        leaf_step = next((s for s in path_info['steps'] if s.get('is_leaf')), None)
-        if leaf_step:
-            class_counts = leaf_step.get('class_probs', [0, 0])
-            if isinstance(class_counts, list) and len(class_counts) == 2:
-                count_no = int(class_counts[0])
-                count_yes = int(class_counts[1])
-                total = count_no + count_yes
-                prob_no = count_no / total if total > 0 else 0
-                prob_yes = count_yes / total if total > 0 else 0
+        # Probabilitas dari model calibrated (konsisten dengan result card di atas)
+        prob_no = float(probabilities[0])
+        prob_yes = float(probabilities[1])
 
-                # Tampilkan setiap langkah decision
-                decision_steps = [s for s in path_info['steps'] if not s.get('is_leaf')]
+        # Tampilkan setiap langkah decision
+        decision_steps = [s for s in path_info['steps'] if not s.get('is_leaf')]
 
-                FEAT_ID = {
-                    'Age': 'Usia', 'Salt_Intake': 'Asupan Garam',
-                    'Stress_Score': 'Tingkat Stres', 'BP_History': 'Riwayat Tekanan Darah',
-                    'Sleep_Duration': 'Durasi Tidur', 'BMI': 'BMI',
-                    'Family_History': 'Riwayat Keluarga', 'Exercise_Level': 'Aktivitas Fisik',
-                    'Smoking_Status': 'Status Merokok',
-                }
-                REVERSE_BP = {1: 'Normal', 2: 'Prehypertension', 3: 'Hypertension'}
-                REVERSE_FH = {0: 'No', 1: 'Yes'}
-                REVERSE_EL = {1: 'Low', 2: 'Moderate', 3: 'High'}
-                REVERSE_SM = {0: 'Non-Smoker', 1: 'Smoker'}
+        FEAT_ID = {
+            'Age': 'Usia', 'Salt_Intake': 'Asupan Garam',
+            'Stress_Score': 'Tingkat Stres',
+            'Sleep_Duration': 'Durasi Tidur', 'BMI': 'BMI',
+            'Family_History': 'Riwayat Keluarga',
+            'Smoking_Status': 'Status Merokok',
+        }
+        REVERSE_FH = {0: 'No', 1: 'Yes'}
+        REVERSE_SM = {0: 'Non-Smoker', 1: 'Smoker'}
 
-                def fmt_val(feat, val):
-                    if isinstance(val, str):
-                        return val
-                    if feat == 'BP_History' and val in REVERSE_BP:
-                        return f"{REVERSE_BP[int(val)]} (encoded = {int(val)})"
-                    if feat == 'Family_History' and val in REVERSE_FH:
-                        return f"{REVERSE_FH[int(val)]} (encoded = {int(val)})"
-                    if feat == 'Exercise_Level' and val in REVERSE_EL:
-                        return f"{REVERSE_EL[int(val)]} (encoded = {int(val)})"
-                    if feat == 'Smoking_Status' and val in REVERSE_SM:
-                        return f"{REVERSE_SM[int(val)]} (encoded = {int(val)})"
-                    if isinstance(val, float) and val == int(val):
-                        return str(int(val))
-                    if isinstance(val, (int, float)):
-                        return f"{val:.2f}".rstrip('0').rstrip('.')
-                    return str(val)
+        def fmt_val(feat, val):
+            if isinstance(val, str):
+                return val
+            if feat == 'Family_History' and val in REVERSE_FH:
+                return f"{REVERSE_FH[int(val)]} (encoded = {int(val)})"
+            if feat == 'Smoking_Status' and val in REVERSE_SM:
+                return f"{REVERSE_SM[int(val)]} (encoded = {int(val)})"
+            if isinstance(val, float) and val == int(val):
+                return str(int(val))
+            if isinstance(val, (int, float)):
+                return f"{val:.2f}".rstrip('0').rstrip('.')
+            return str(val)
 
-                calc_md = ""
-                for step in decision_steps:
-                    feat = step.get('feature', '')
-                    direction = step.get('direction', '')
-                    label_ya = "YA (kiri)" if direction == 'left' else "YA (kiri) ✅"
-                    label_tidak = "TIDAK (kanan)" if direction == 'right' else "TIDAK (kanan) ❌"
-                    badge = label_ya if direction == 'left' else label_tidak
+        calc_md = ""
+        for step in decision_steps:
+            feat = step.get('feature', '')
+            direction = step.get('direction', '')
+            badge = "YA (kiri) ✅" if direction == 'left' else "TIDAK (kanan) ❌"
 
-                    calc_md += f"**Step {step['step']} — {FEAT_ID.get(feat, feat)}**  \n"
-                    calc_md += f"- Nilai Anda: `{fmt_val(feat, step.get('display_value', step.get('input_value', '')))}`  \n"
-                    calc_md += f"- Threshold: `{step['threshold']}`  \n"
-                    comp = step.get('comparison', '')
-                    calc_md += f"- Kondisi: `{comp}`  \n"
-                    calc_md += f"- Hasil: → **{badge}**  \n\n"
+            calc_md += f"**Step {step['step']} — {FEAT_ID.get(feat, feat)}**  \n"
+            calc_md += f"- Nilai Anda: `{fmt_val(feat, step.get('display_value', step.get('input_value', '')))}`  \n"
+            calc_md += f"- Threshold: `{step['threshold']}`  \n"
+            comp = step.get('comparison', '')
+            calc_md += f"- Kondisi: `{comp}`  \n"
+            calc_md += f"- Hasil: → **{badge}**  \n\n"
 
-                calc_md += "---  \n\n"
-                calc_md += f"**📊 Leaf Node — Sample di Training Data:**  \n\n"
-                calc_md += f"| Kelas | Jumlah Sample | Perhitungan | Probabilitas |  \n"
-                calc_md += f"|---|---|---|---|  \n"
-                calc_md += f"| Tidak Hipertensi | {count_no} | {count_no} / {total} | **{prob_no * 100:.1f}%** |  \n"
-                calc_md += f"| Hipertensi | {count_yes} | {count_yes} / {total} | **{prob_yes * 100:.1f}%** |  \n\n"
-                calc_md += f"**Total sample di leaf ini: {total}**  \n\n"
-                calc_md += f"> Prediksi akhir: **{'Tidak Hipertensi' if path_info['predicted_class'] == 0 else 'Hipertensi'}** dengan keyakinan **{confidence * 100:.1f}%**"
+        calc_md += "---  \n\n"
+        calc_md += f"**📊 Probabilitas Hasil (Calibrated Model):**  \n\n"
+        calc_md += f"| Kelas | Probabilitas |  \n"
+        calc_md += f"|---|---|  \n"
+        calc_md += f"| Tidak Hipertensi | **{prob_no * 100:.1f}%** |  \n"
+        calc_md += f"| Hipertensi | **{prob_yes * 100:.1f}%** |  \n\n"
+        calc_md += f"> Prediksi akhir: **{'Tidak Hipertensi' if path_info['predicted_class'] == 0 else 'Hipertensi'}** dengan keyakinan **{confidence * 100:.1f}%**"
 
-                st.markdown(calc_md)
+        st.markdown(calc_md)
 
 st.markdown("---")
 st.markdown("### 🌳 Visualisasi Pohon Keputusan Lengkap")

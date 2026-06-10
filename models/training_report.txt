@@ -3,37 +3,35 @@
   Decision Tree + Probability Calibration
 =================================================================
 
-Training Date : 2026-05-25 23:08:13
-Dataset       : D:\SPK HYPERTENSION\hypertension_dataset.xlsx
+Training Date : 2026-06-10 17:28:08
+Dataset       : ../SPK HYPERTENSION/hypertension_dataset.xlsx
 Total Samples : 1985
 Train Samples : 1588 (80%)
 Test Samples  : 397 (20%)
 
 Best Parameters:
-  criterion: gini
-  max_depth: 8
+  criterion: entropy
+  max_depth: 7
   min_samples_leaf: 1
-  min_samples_split: 5
+  min_samples_split: 10
 
 Metrics (Calibrated Model):
-  Accuracy:  0.9673
-  Precision: 0.9707
-  Recall:    0.9660
-  F1-Score:  0.9684
+  Accuracy:  0.8035
+  Precision: 0.8678
+  Recall:    0.7330
+  F1-Score:  0.7947
 
 Confidence Distribution:
-  Min:  50.9%
-  Mean: 93.3%
-  Max:  98.1%
-  <90%: 56 samples
+  Min:  50.1%
+  Mean: 73.8%
+  Max:  93.4%
+  <90%: 298 samples
 
 Feature Importance:
-  BP_History: 0.2804
-  Age: 0.1370
-  Family_History: 0.1176
-  Stress_Score: 0.1003
-  BMI: 0.0962
-  Smoking_Status: 0.0906
-  Salt_Intake: 0.0898
-  Sleep_Duration: 0.0882
-  Exercise_Level: 0.0000
+  Age: 0.2393
+  BMI: 0.1432
+  Family_History: 0.1320
+  Salt_Intake: 0.1274
+  Sleep_Duration: 0.1260
+  Smoking_Status: 0.1199
+  Stress_Score: 0.1121

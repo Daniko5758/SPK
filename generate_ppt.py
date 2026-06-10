@@ -280,7 +280,7 @@ add_slide_header(sl, "01  Dataset", "Sumber dan spesifikasi data yang digunakan"
 card_data = [
     ("📁 Sumber Data",  "D:\\SPK HYPERTENSION\\hypertension_dataset.xlsx"),
     ("📊 Total Sample",  "1.985 record"),
-    ("🔢 Fitur",       "9 fitur (input) + 1 target"),
+    ("🔢 Fitur",       "7 fitur (input) + 1 target"),
     ("🎯 Target",      "Has_Hypertension (0 = Tidak, 1 = Ya)"),
 ]
 cx = Inches(0.4)
@@ -296,12 +296,10 @@ feat_rows = [
     ["1",  "Age",              "Numerik",  "1 - 120 tahun",           "digunakan langsung"],
     ["2",  "Salt_Intake",       "Numerik",  "0 - 25 gram/hari",         "digunakan langsung"],
     ["3",  "Stress_Score",      "Numerik",  "0 - 10",                   "digunakan langsung"],
-    ["4",  "BP_History",       "Kategorik","Normal / Prehyper / Hyper","1 / 2 / 3"],
-    ["5",  "Sleep_Duration",    "Numerik",  "0 - 24 jam/hari",          "digunakan langsung"],
-    ["6",  "BMI",               "Numerik",  "10 - 80",                  "digunakan langsung"],
-    ["7",  "Family_History",    "Kategorik","No / Yes",                 "0 / 1"],
-    ["8",  "Smoking_Status",    "Kategorik","Non-Smoker / Smoker",      "0 / 1"],
-    ["9",  "Exercise_Level",     "Kategorik","Low / Moderate / High",   "1 / 2 / 3"],
+    ["4",  "Sleep_Duration",    "Numerik",  "0 - 24 jam/hari",          "digunakan langsung"],
+    ["5",  "BMI",               "Numerik",  "10 - 80",                  "digunakan langsung"],
+    ["6",  "Family_History",    "Kategorik","No / Yes",                 "0 / 1"],
+    ["7",  "Smoking_Status",    "Kategorik","Non-Smoker / Smoker",      "0 / 1"],
 ]
 feat_table = [feat_header] + feat_rows
 
@@ -312,7 +310,8 @@ pptx_table(sl, feat_table,
 
 # Note
 add_textbox(sl, Inches(0.4), Inches(7.0), Inches(12), Inches(0.4),
-            "📌 Split data: 80% training (1.588) | 20% testing (397) - stratified sampling",
+            "📌 Split data: 80% training (1.588) | 20% testing (397) - stratified sampling | "
+            "BP_History & Exercise_Level di-drop (tidak dipakai model)",
             font_size=12, color=COl_TEXT_MID, italic=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -344,15 +343,13 @@ add_rect_text(sl, Inches(6.6), Inches(1.3), Inches(6.3), Inches(0.6),
 
 criteria_data = [
     ("Kriteria",          "Bobot Prioritas"),
-    ("Riwayat Tekanan Darah (BP_History)",  "28.04% - Paling Penting"),
-    ("Usia (Age)",                     "13.70%"),
-    ("Riwayat Keluarga (Family_History)",   "11.76%"),
-    ("Tingkat Stres (Stress_Score)",        "10.03%"),
-    ("BMI",                            "09.62%"),
-    ("Status Merokok (Smoking_Status)",    "09.06%"),
-    ("Asupan Garam (Salt_Intake)",          "08.98%"),
-    ("Durasi Tidur (Sleep_Duration)",       "08.82%"),
-    ("Aktivitas Fisik (Exercise_Level)",    "00.00% - Diabaikan model"),
+    ("Usia (Age)",                     "23.93% - Paling Penting"),
+    ("BMI",                            "14.32%"),
+    ("Riwayat Keluarga (Family_History)",   "13.20%"),
+    ("Asupan Garam (Salt_Intake)",          "12.74%"),
+    ("Durasi Tidur (Sleep_Duration)",       "12.60%"),
+    ("Status Merokok (Smoking_Status)",    "11.99%"),
+    ("Tingkat Stres (Stress_Score)",        "11.21%"),
 ]
 pptx_table(sl, criteria_data,
             [Inches(4.0), Inches(2.1)],
@@ -370,7 +367,7 @@ add_rect_text(sl, Inches(0.4), Inches(5.1), Inches(6.0), Inches(1.6),
 # SLIDE 5 - METODE (Decision Tree)
 # ─────────────────────────────────────────────────────────────────────────────
 sl = prs.slides.add_slide(blank_layout)
-add_slide_header(sl, "03  Metode - Decision Tree", "Algoritma utama yang digunakan")
+add_slide_header(sl, "03  Metode - Decision Tree", "Algoritma utama yang digunakan (C4.5 / ID3 dengan Entropy)")
 
 # Left column - explanation
 add_textbox(sl, Inches(0.4), Inches(1.3), Inches(5.5), Inches(0.5),
@@ -406,9 +403,9 @@ add_rect_text(sl, Inches(6.5), Inches(1.3), Inches(6.5), Inches(0.55),
 
 hp_data = [
     ("Parameter",           "Nilai",         "Keterangan"),
-    ("criterion",          "gini",           "Ukuran kemurnian node"),
-    ("max_depth",           "8",              "Kedalaman maksimum pohon"),
-    ("min_samples_split",   "5",              "Min sample untuk split"),
+    ("criterion",          "entropy",        "Information gain (C4.5)"),
+    ("max_depth",           "7",              "Kedalaman maksimum pohon"),
+    ("min_samples_split",   "10",             "Min sample untuk split"),
     ("min_samples_leaf",    "1",              "Min sample di leaf"),
     ("cv_folds",            "5",              "Cross-validation"),
 ]
@@ -419,9 +416,9 @@ pptx_table(sl, hp_data,
 
 # Gini formula visual
 add_rect_text(sl, Inches(6.5), Inches(4.2), Inches(6.5), Inches(1.5),
-              "📐  Gini Impurity (Kriteria Split):\n\n"
-              "  Gini = 1 − Σ (pᵢ)²\n\n"
-              "  Semakin kecil nilai Gini → node semakin murni → split semakin baik",
+              "📐  Entropy (Kriteria Split - C4.5):\n\n"
+              "  Entropy = − Σ pᵢ · log₂(pᵢ)\n\n"
+              "  Semakin kecil nilai Entropy → node semakin murni → split semakin baik",
               COl_LIGHT_BG, COl_TEXT_DARK, font_size=13, bold=False)
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -465,10 +462,10 @@ add_rect_text(sl, Inches(6.7), Inches(2.95), Inches(6.2), Inches(0.55),
               font_size=14, bold=True)
 
 calib_data = [
-    ("Confidence",  "Jumlah Sample"),
-    ("50.9% - 60%",  "sedikit (uncertain)"),
+    ("Confidence",  "Persentase"),
+    ("50.1% - 60%",  "sedikit (uncertain)"),
     ("60% - 80%",    "beberapa"),
-    ("80% - 98.1%",  "mayoritas"),
+    ("80% - 93.4%",  "mayoritas"),
 ]
 pptx_table(sl, calib_data,
             [Inches(2.4), Inches(3.6)],
@@ -501,7 +498,7 @@ pipeline = [
     ("4", "TUNE",          "GridSearchCV",       COl_ACCENT,
      "Cari hyperparameter\nterbaik dengan\n5-fold CV"),
     ("5", "TRAIN",         "Train Decision Tree", COl_GREEN,
-     "Latih model dengan\nhyperparameter terbaik\ncriterion=gini, depth=8"),
+     "Latih model dengan\nhyperparameter terbaik\ncriterion=entropy, depth=7"),
     ("6", "CALIBRATE",     "Isotonic Reg.",      COl_GREEN,
      "Kalibrasi probabilitas\ndengan Calibrated\nClassifierCV (cv=5)"),
     ("7", "EVALUATE",      "Evaluasi Model",     COl_GOLD,
@@ -537,10 +534,10 @@ add_rect_text(sl, Inches(0.4), Inches(4.3), Inches(12.5), Inches(0.55),
               font_size=16, bold=True)
 
 metrics = [
-    ("Accuracy",  "96.73%", COl_GREEN),
-    ("Precision", "97.07%", COl_GREEN),
-    ("Recall",    "96.60%", COl_GREEN),
-    ("F1-Score",  "96.84%", COl_GREEN),
+    ("Accuracy",  "80.35%", COl_GOLD),
+    ("Precision", "86.78%", COl_GOLD),
+    ("Recall",    "73.30%", COl_GOLD),
+    ("F1-Score",  "79.47%", COl_GOLD),
 ]
 mx = Inches(0.4)
 for name, val, col in metrics:
@@ -549,7 +546,7 @@ for name, val, col in metrics:
     mx += Inches(3.2)
 
 add_textbox(sl, Inches(0.4), Inches(6.3), Inches(12), Inches(0.4),
-            "Confidence Distribution: Min 50.9% | Mean 93.3% | Max 98.1% | <90%: 56 sample",
+            "Confidence Distribution: Min 50.1% | Mean 73.8% | Max 93.4% | <90%: 298 sample (75.1% test set)",
             font_size=13, color=COl_TEXT_MID, italic=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -568,8 +565,8 @@ add_rect_text(sl, Inches(8.2), Inches(1.3), Inches(4.8), Inches(0.55),
               "Fitur Aplikasi", COl_BG_DARK, COl_WHITE, font_size=16, bold=True)
 
 fitur_items = [
-    "📋  Form input 9 fitur pasien",
-    "🔍  Prediksi real-time + confidence",
+    "📋  Form input 7 fitur pasien",
+    "🔍  Prediksi real-time + calibrated confidence",
     "🌳  Visualisasi alur keputusan (decision path)",
     "📐  Perhitungan probabilitas step-by-step",
     "📊  Feature importance chart",
@@ -596,11 +593,11 @@ add_slide_header(sl, "Kesimpulan", "Ringkasan dan hasil akhir proyek")
 
 # Summary cards
 summary = [
-    ("✅", "Akurasi Tinggi",    "96.73% accuracy dengan Decision Tree + GridSearchCV"),
-    ("📊", "Confidence Realistis", "Isotonic Regression membuat probabilitas lebih jujur"),
-    ("🌳", "Feature Importance", "BP_History paling berpengaruh (28.04%)"),
+    ("✅", "Akurasi Baik",     "80.35% accuracy dengan Decision Tree + GridSearchCV + Calibration"),
+    ("📊", "Confidence Realistis", "Isotonic Regression membuat probabilitas lebih jujur (50-93%)"),
+    ("🌳", "Feature Importance", "Age paling berpengaruh (23.93%), diikuti BMI & Family_History"),
     ("👁️", "Visualisasi Jelas",  "Decision path & pohon lengkap dapat dipahami dokter & pasien"),
-    ("🔢", "9 Fitur",            "Kombinasi data demografi, gaya hidup, dan riwayat kesehatan"),
+    ("🔢", "7 Fitur",            "Kombinasi data demografi, gaya hidup, dan riwayat kesehatan"),
     ("📱", "Web App",            "Aplikasi interaktif berbasis Streamlit - mudah digunakan"),
 ]
 sx = Inches(0.4)

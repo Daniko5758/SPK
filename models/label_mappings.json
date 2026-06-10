@@ -1,18 +1,8 @@
 {
   "label_maps": {
-    "BP_History": {
-      "Normal": 1,
-      "Prehypertension": 2,
-      "Hypertension": 3
-    },
     "Family_History": {
       "No": 0,
       "Yes": 1
-    },
-    "Exercise_Level": {
-      "Low": 1,
-      "Moderate": 2,
-      "High": 3
     },
     "Smoking_Status": {
       "Non-Smoker": 0,
@@ -24,19 +14,9 @@
     }
   },
   "reverse_maps": {
-    "BP_History": {
-      "1": "Normal",
-      "2": "Prehypertension",
-      "3": "Hypertension"
-    },
     "Family_History": {
       "0": "No",
       "1": "Yes"
-    },
-    "Exercise_Level": {
-      "1": "Low",
-      "2": "Moderate",
-      "3": "High"
     },
     "Smoking_Status": {
       "0": "Non-Smoker",
